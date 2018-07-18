@@ -103,7 +103,7 @@ testimages_dir       = 'SingleType111Loops/testimages/'
 trainlabels  = 'SingleType111Loops/trainlabels.csv'
 testlabels   = 'SingleType111Loops/testlabels.csv'
 
-input_format = ['image_name', 'class_id', 'xmin', 'xmax', 'ymin', 'ymax']
+input_format = ['image_name', 'class_id', 'ymin', 'xmin', 'ymax', 'xmax']
 
 # The XML parser needs to now what object class names to look for and in which order to map them to integers.
 classes = ['111']
