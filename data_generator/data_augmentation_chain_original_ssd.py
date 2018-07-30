@@ -34,7 +34,7 @@ class SSDRandomCrop:
     https://arxiv.org/abs/1512.02325
     '''
 
-    def __init__(self, labels_format={'class_id': 0, 'xmin': 1, 'ymin': 2, 'xmax': 3, 'ymax': 4}):
+    def __init__(self, labels_format={'xmin': 0, 'ymin': 1, 'xmax': 2, 'ymax': 3}):
         '''
         Arguments:
             labels_format (dict, optional): A dictionary that defines which index in the last axis of the labels

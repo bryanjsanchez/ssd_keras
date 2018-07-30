@@ -6,7 +6,7 @@ from math import ceil
 import numpy as np
 from matplotlib import pyplot as plt
 
-from models.keras_ssd512 import ssd_512
+from models.keras_ssd300 import ssd_300
 from keras_loss_function.keras_ssd_loss import SSDLoss
 from keras_layers.keras_layer_AnchorBoxes import AnchorBoxes
 from keras_layers.keras_layer_DecodeDetections import DecodeDetections
@@ -24,25 +24,24 @@ from data_generator.object_detection_2d_misc_utils import apply_inverse_transfor
 
 #%matplotlib inline
 
-img_height = 512 # Height of the model input images
-img_width = 512 # Width of the model input images
+img_height = 300 # Height of the model input images
+img_width = 300 # Width of the model input images
 img_channels = 3 # Number of color channels of the model input images
 mean_color = [123, 117, 104] # The per-channel mean of the images in the dataset. Do not change this value if you're using any of the pre-trained weights.
 swap_channels = [2, 1, 0] # The color channel order in the original SSD is BGR, so we'll have the model reverse the color channel order of the input images.
 n_classes = 1 # Number of positive classes, e.g. 20 for Pascal VOC, 80 for MS COCO
-scales_pascal = [0.07, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.05] # The anchor box scaling factors used in the original SSD512 for the Pascal VOC datasets
-scales_coco = [0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05] # The anchor box scaling factors used in the original SSD512 for the MS COCO datasets
-scales = scales_pascal
+scales_pascal = [0.1, 0.2, 0.37, 0.54, 0.71, 0.88, 1.05] # The anchor box scaling factors used in the original SSD300 for the Pascal VOC datasets
+scales_coco = [0.07, 0.15, 0.33, 0.51, 0.69, 0.87, 1.05] # The anchor box scaling factors used in the original SSD300 for the MS COCO datasets
+scales = scales_coco
 aspect_ratios = [[1.0, 2.0, 0.5],
                  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],
                  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],
                  [1.0, 2.0, 0.5, 3.0, 1.0/3.0],
-		 [1.0, 2.0, 0.5, 3.0, 1.0/3.0],                 
-		 [1.0, 2.0, 0.5],
-                 [1.0, 2.0, 0.5]] # The anchor box aspect ratios used in the original SSD512; the order matters
+                 [1.0, 2.0, 0.5],
+                 [1.0, 2.0, 0.5]] # The anchor box aspect ratios used in the original SSD300; the order matters
 two_boxes_for_ar1 = True
-steps = [8, 16, 32, 64, 128, 256, 512] # The space between two adjacent anchor box center points for each predictor layer.
-offsets = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5] # The offsets of the first anchor box center points from the top and left borders of the image as a fraction of the step size for each predictor layer.
+steps = [8, 16, 32, 64, 100, 300] # The space between two adjacent anchor box center points for each predictor layer.
+offsets = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5] # The offsets of the first anchor box center points from the top and left borders of the image as a fraction of the step size for each predictor layer.
 clip_boxes = False # Whether or not to clip the anchor boxes to lie entirely within the image boundaries
 variances = [0.1, 0.1, 0.2, 0.2] # The variances by which the encoded target coordinates are divided as in the original implementation
 normalize_coords = True
@@ -51,7 +50,7 @@ normalize_coords = True
 
 K.clear_session() # Clear previous models from memory.
 
-model = ssd_512(image_size=(img_height, img_width, img_channels),
+model = ssd_300(image_size=(img_height, img_width, img_channels),
                 n_classes=n_classes,
                 mode='training',
                 l2_regularization=0.0005,
@@ -69,7 +68,7 @@ model = ssd_512(image_size=(img_height, img_width, img_channels),
 # 2: Load some weights into the model.
 
 # TODO: Set the path to the weights you want to load.
-weights_path = 'VGG_ILSVRC_16_layers_fc_reduced.h5'
+weights_path = '../CommonFiles/VGG_ILSVRC_16_layers_fc_reduced.h5'
 
 model.load_weights(weights_path, by_name=True)
 
@@ -93,19 +92,16 @@ val_dataset = DataGenerator(load_images_into_memory=False, hdf5_dataset_path=Non
 
 # 2: Parse the image and label lists for the training and validation datasets. This can take a while.
 
-# TODO: Set the paths to the datasets here.
-
 # The directories that contain the images.
-trainimages_dir      = 'SingleType111Loops/trainimages/'
-testimages_dir       = 'SingleType111Loops/testimages/'
+trainimages_dir      = '../CommonFiles/SingleType111Loops/trainimages/'
+testimages_dir       = '../CommonFiles/SingleType111Loops/testimages/'
 
 # The files that contain the annotations.
-trainlabels  = 'SingleType111Loops/trainlabels.csv'
-testlabels   = 'SingleType111Loops/testlabels.csv'
+trainlabels  = '../CommonFiles/SingleType111Loops/trainlabels.csv'
+testlabels   = '../CommonFiles/SingleType111Loops/testlabels.csv'
 
-input_format = ['image_name', 'class_id', 'ymin', 'xmin', 'ymax', 'xmax']
+input_format = ['image_name', 'class_id', 'xmin', 'ymin', 'xmax', 'ymax']
 
-# The XML parser needs to now what object class names to look for and in which order to map them to integers.
 classes = ['111']
 
 train_dataset.parse_csv(images_dir=trainimages_dir,
@@ -122,7 +118,7 @@ val_dataset.parse_csv(images_dir=testimages_dir,
                   include_classes='all',
                   random_sample=False,
                   ret=False,
-                  verbose=True) 
+                  verbose=True)
 
 # Optional: Convert the dataset into an HDF5 dataset. This will require more disk space, but will
 # speed up the training. Doing this is not relevant in case you activated the `load_images_into_memory`
@@ -141,7 +137,7 @@ val_dataset.create_hdf5_dataset(file_path='dataset_pascal_voc_07_test.h5',
 
 # 3: Set the batch size.
 
-batch_size = 30 # Change the batch size if you like, or if you run into GPU memory issues.
+batch_size = 10 # Change the batch size if you like, or if you run into GPU memory issues.
 
 # 4: Set the image transformations for pre-processing and data augmentation options.
 
@@ -162,8 +158,7 @@ predictor_sizes = [model.get_layer('conv4_3_norm_mbox_conf').output_shape[1:3],
                    model.get_layer('conv6_2_mbox_conf').output_shape[1:3],
                    model.get_layer('conv7_2_mbox_conf').output_shape[1:3],
                    model.get_layer('conv8_2_mbox_conf').output_shape[1:3],
-                   model.get_layer('conv9_2_mbox_conf').output_shape[1:3],
-		   model.get_layer('conv10_2_mbox_conf').output_shape[1:3]]
+                   model.get_layer('conv9_2_mbox_conf').output_shape[1:3]]
 
 ssd_input_encoder = SSDInputEncoder(img_height=img_height,
                                     img_width=img_width,
@@ -220,16 +215,16 @@ def lr_schedule(epoch):
 # Define model callbacks.
 
 # TODO: Set the filepath under which you want to save the model.
-model_checkpoint = ModelCheckpoint(filepath='ssd512_pascal_07+12_epoch-{epoch:02d}_loss-{loss:.4f}_val_loss-{val_loss:.4f}.h5',
+model_checkpoint = ModelCheckpoint(filepath='ssd300_pascal_07+12_epoch-{epoch:02d}_loss-{loss:.4f}_val_loss-{val_loss:.4f}.h5',
                                    monitor='val_loss',
                                    verbose=1,
                                    save_best_only=True,
                                    save_weights_only=False,
                                    mode='auto',
-                                   period=1)
+                                   period=100)
 #model_checkpoint.best = 
 
-csv_logger = CSVLogger(filename='ssd512_pascal_07+12_training_log.csv',
+csv_logger = CSVLogger(filename='ssd300_pascal_07+12_training_log.csv',
                        separator=',',
                        append=True)
 
@@ -245,8 +240,8 @@ callbacks = [model_checkpoint,
 
 # If you're resuming a previous training, set `initial_epoch` and `final_epoch` accordingly.
 initial_epoch   = 0
-final_epoch     = 10
-steps_per_epoch = 9
+final_epoch     = 300
+steps_per_epoch = 27
 
 history = model.fit_generator(generator=train_generator,
                               steps_per_epoch=steps_per_epoch,
@@ -255,6 +250,4 @@ history = model.fit_generator(generator=train_generator,
                               validation_data=val_generator,
                               validation_steps=ceil(val_dataset_size/batch_size),
                               initial_epoch=initial_epoch)
-
-model.save('ssd512_10_iter.h5')
-
+model.save('ssd300_epochs-300.h5')
