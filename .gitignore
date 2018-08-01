@@ -100,3 +100,4 @@ local*
 SingleType111Loops/
 *.h5
 results/
+TRAINED_MODELS/
